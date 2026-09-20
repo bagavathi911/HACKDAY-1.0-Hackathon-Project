@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error</title>
+    <style>
+        body {
+            background-color: black;
+            color: #ff4444;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .error-box {
+            background-color: rgba(0, 0, 0, 0.85);
+            padding: 40px;
+            border-radius: 15px;
+            border: 1px solid #ff4444;
+            box-shadow: 0 0 20px #ff4444;
+            max-width: 600px;
+            width: 90%;
+            z-index: 10;
+            position: relative;
+        }
+
+        h1 {
+            color: #ff4444;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        p {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        a {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            color: #00ffff;
+            text-decoration: underline;
+        }
+
+        a:hover {
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrixCanvas"></canvas>
+
+    <div class="error-box">
+        <h1>𝙳𝙴𝙲𝚁𝚈𝙿𝚃𝙸𝙾𝙽 𝙵𝙰𝙸𝙻𝙴𝙳 — 𝙸𝙽𝚅𝙰𝙻𝙸𝙳 𝙺𝙴𝚈 𝙾𝚁 𝙽𝙾 𝙿𝙰𝚈𝙻𝙾𝙰𝙳
+</h1>
+        <p>{{ error_message }}</p>
+        <a href="/">Return to Home</a>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set full screen size for canvas
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = "アァイィウエェオカキクケコサシスセソタチツテトナニヌネノABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        const fontSize = 16;
+        const columns = Math.floor(canvas.width / fontSize);
+
+        // Create an array of drops - one per column
+        const drops = new Array(columns).fill(1);
+
+        function draw() {
+            // translucent background to create fading effect
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#FF0000"; // red text color
+            ctx.font = fontSize + "px monospace";
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+
+                drops[i]++;
+            }
+        }
+
+        setInterval(draw, 35);
+
+        // Resize canvas if window resizes
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

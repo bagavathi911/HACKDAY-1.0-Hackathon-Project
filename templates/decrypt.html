@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DECRYPTED</title>
+
+    <style>
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: "Courier New", monospace;
+            background: black;
+            color: #00ff00;
+        }
+
+        
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                repeating-linear-gradient(
+                    to bottom,
+                    rgba(0, 255, 0, 0.03),
+                    rgba(0, 255, 0, 0.03) 1px,
+                    transparent 2px,
+                    transparent 4px
+                );
+            animation: flicker 0.15s infinite;
+            z-index: 3;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.95; }
+            50% { opacity: 1; }
+            100% { opacity: 0.97; }
+        }
+
+        
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+
+        
+        .box {
+            width: 90%;
+            max-width: 480px;
+            margin: 10vh auto;
+            padding: 35px;
+            background: rgba(0,0,0,0.85);
+            border-radius: 15px;
+            box-shadow: 0 0 25px #00ff00;
+            z-index: 2;
+        }
+
+        h2 {
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            text-shadow: 0 0 8px #00ff00;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        input, button {
+            width: 100%;
+            margin-top: 8px;
+            padding: 10px;
+            background: black;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            font-family: inherit;
+            box-shadow: 0 0 6px #00ff00 inset;
+        }
+
+        button {
+            margin-top: 25px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #00ff00;
+            color: black;
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #00ff00;
+            background: rgba(0,0,0,0.7);
+            white-space: pre-wrap;
+            box-shadow: 0 0 10px #00ff00 inset;
+        }
+
+        .error {
+            color: #ff3333;
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<canvas id="matrixCanvas"></canvas>
+
+<div class="box">
+    <h2>DECRYPT MESSAGE</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        <label>Select Stego Image</label>
+        <input type="file" name="image" id="stegoImage" required>
+        <pre id="statusBox">Waiting for image...</pre>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Enter password" required>
+
+        <button type="submit">Decrypt</button>
+    </form>
+
+    {% if message %}
+        <div class="result">
+            <strong>Hidden Message:</strong><br><br>
+            {{ message }}
+        </div>
+    {% elif error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+</div>
+
+<script>
+
+const canvas = document.getElementById("matrixCanvas");
+const ctx = canvas.getContext("2d");
+const statusBox = document.getElementById("statusBox");
+
+if (statusBox) {
+    statusBox.textContent = "Waiting for image...";
+}
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+
+const chars = "アァイィウエェオカキクケコサシスセソABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const fontSize = 16;
+let columns = Math.floor(canvas.width / fontSize);
+let drops = Array(columns).fill(1);
+
+function drawMatrix() {
+    ctx.fillStyle = "rgba(0,0,0,0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = fontSize + "px monospace";
+    ctx.fillStyle = "#00ff00";
+
+    for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+setInterval(drawMatrix, 35);
+
+window.addEventListener("resize", () => {
+    resizeCanvas();
+    columns = Math.floor(canvas.width / fontSize);
+    drops = Array(columns).fill(1);
+});
+
+const stegoImage = document.getElementById("stegoImage");
+if (stegoImage) {
+    stegoImage.addEventListener("change", () => {
+        statusBox.textContent = "Image selected. Ready to decrypt.";
+    });
+}
+
+const form = document.querySelector("form");
+if (form) {
+    form.addEventListener("submit", () => {
+        statusBox.textContent = "Decrypting hidden payload...";
+    });
+}
+</script>
+
+</body>
+</html>

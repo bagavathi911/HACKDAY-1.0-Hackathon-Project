@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ENCRYPT</title>
+
+    <style>
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: "Courier New", monospace;
+            background: black;
+            color: #00ff00;
+        }
+
+        
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                repeating-linear-gradient(
+                    to bottom,
+                    rgba(0, 255, 0, 0.03),
+                    rgba(0, 255, 0, 0.03) 1px,
+                    transparent 2px,
+                    transparent 4px
+                );
+            animation: flicker 0.15s infinite;
+            z-index: 3;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.95; }
+            50% { opacity: 1; }
+            100% { opacity: 0.97; }
+        }
+
+        
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+
+        
+        .box {
+            width: 90%;
+            max-width: 480px;
+            margin: 10vh auto;
+            padding: 35px;
+            background: rgba(0,0,0,0.85);
+            border-radius: 15px;
+            box-shadow: 0 0 25px #00ff00;
+            z-index: 2;
+        }
+
+        h2 {
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            text-shadow: 0 0 8px #00ff00;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+        }
+
+        input, textarea, button {
+            width: 100%;
+            margin-top: 8px;
+            padding: 10px;
+            background: black;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            font-family: inherit;
+            box-shadow: 0 0 6px #00ff00 inset;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        button {
+            margin-top: 25px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #00ff00;
+            color: black;
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        pre {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            white-space: pre-line;
+            background: rgba(0,0,0,0.6);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #00ff00;
+        }
+
+        .error {
+            color: #ff3333;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<canvas id="matrixCanvas"></canvas>
+
+<div class="box">
+    <h2>ENCRYPT MESSAGE</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        <label>Select Image</label>
+        <input type="file" name="image" id="img" required>
+
+        <pre id="stats">Waiting for image...</pre>
+
+        <label>Secret Message</label>
+        <textarea name="message" rows="4" placeholder="Enter secret text..." required></textarea>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Strong password" required>
+
+        <button type="submit">Encrypt & Download</button>
+    </form>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+</div>
+
+<script>
+
+const canvas = document.getElementById("matrixCanvas");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+
+const chars = "アァイィウエェオカキクケコサシスセソABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const fontSize = 16;
+let columns = Math.floor(canvas.width / fontSize);
+let drops = Array(columns).fill(1);
+
+function drawMatrix() {
+    ctx.fillStyle = "rgba(0,0,0,0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = fontSize + "px monospace";
+    ctx.fillStyle = "#00ff00";
+
+    for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+setInterval(drawMatrix, 35);
+
+window.addEventListener("resize", () => {
+    resizeCanvas();
+    columns = Math.floor(canvas.width / fontSize);
+    drops = Array(columns).fill(1);
+});
+
+
+document.getElementById("img").addEventListener("change", () => {
+    const statusBox = document.getElementById("stats");
+    statusBox.textContent = "Adaptive pixel processing is running...";
+
+    const fd = new FormData();
+    fd.append("image", img.files[0]);
+
+    fetch("/image_stats", { method: "POST", body: fd })
+        .then(res => res.json())
+        .then(data => {
+            statusBox.textContent = data.stats || "Adaptive pixel processing complete.";
+        })
+        .catch(() => {
+            statusBox.textContent = "Failed to read image stats";
+        });
+});
+</script>
+
+</body>
+</html>

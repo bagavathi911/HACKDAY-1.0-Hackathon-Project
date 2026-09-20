@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>ɪɴᴛᴇʟʟɪɢᴇɴᴛ ᴘɪxᴇʟ ꜱᴇʟᴇᴄᴛɪᴏɴ ꜱᴛᴇɢᴀɴᴏɢʀᴀᴘʜʏ</title>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            background-color: black;
+            color: #00ff00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            user-select: none;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+
+        
+        .container {
+            background-color: rgba(0, 0, 0, 0.85);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 25px #00ff00;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 40px;
+            font-size: 1.6rem;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        a {
+            display: block;
+            padding: 14px 0;
+            margin: 15px auto;
+            width: 240px;
+            background-color: transparent;
+            color: #00ff00;
+            text-decoration: none;
+            border-radius: 10px;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 12px #00ff00 inset;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        a:hover {
+            background-color: #00ff00;
+            color: black;
+            box-shadow: 0 0 25px #00ff00, 0 0 40px #00ff00 inset;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+
+<canvas id="matrixCanvas"></canvas>
+
+<div class="container">
+    <h1>ꜱᴇꜱꜱɪᴏɴ ɪɴɪᴛɪᴀʟɪᴢᴇᴅ</h1>
+    <a href="/encrypt">Encrypt Data</a>
+    <a href="/decrypt">Decrypt Data</a>
+</div>
+
+<script>
+
+const canvas = document.getElementById("matrixCanvas");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+
+const chars =
+    "アァイィウエェオカキクケコサシスセソタチツテトナニヌネノABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+const fontSize = 16;
+let columns = Math.floor(canvas.width / fontSize);
+let drops = Array(columns).fill(1);
+
+function draw() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+
+        ctx.fillStyle = Math.random() < 0.75 ? "#00ff00" : "#ff0000";
+
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+setInterval(draw, 35);
+
+window.addEventListener("resize", () => {
+    resizeCanvas();
+    columns = Math.floor(canvas.width / fontSize);
+    drops = Array(columns).fill(1);
+});
+</script>
+
+</body>
+</html>
