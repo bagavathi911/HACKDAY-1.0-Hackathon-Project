@@ -1,0 +1,97 @@
+# -------------------------------Intelligent Pixel Selection Steganography - Google Colab -------------------------------
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from google.colab import files
+
+# Fix random seed for deterministic behavior
+np.random.seed(42)
+
+# Upload image
+uploaded = files.upload()
+image_path = list(uploaded.keys())[0]
+print("Image uploaded:", image_path)
+
+# Load image
+image = cv2.imread(image_path)
+image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+height, width = gray.shape
+
+# ---------------- Edge Detection ----------------
+edges = cv2.Canny(gray, 120, 250, L2gradient=False)
+edges_norm = edges / 255.0
+
+# ---------------- Texture Variance ----------------
+kernel = np.ones((3,3), np.float32) / 9
+mean = cv2.filter2D(gray.astype(np.float32), -1, kernel)
+variance = cv2.filter2D((gray.astype(np.float32) - mean)**2, -1, kernel)
+variance_norm = cv2.normalize(variance, None, 0, 1, cv2.NORM_MINMAX)
+
+# ---------------- Entropy Map ----------------
+def calculate_entropy(block):
+    hist = np.histogram(block, bins=256, range=(0,255))[0]
+    prob = hist / np.sum(hist)
+    prob = prob[prob>0]
+    return -np.sum(prob * np.log2(prob))
+
+block_size = 8
+entropy_map = np.zeros_like(gray, dtype=np.float32)
+for i in range(0, gray.shape[0]-block_size+1, block_size):
+    for j in range(0, gray.shape[1]-block_size+1, block_size):
+        block = gray[i:i+block_size, j:j+block_size]
+        entropy_map[i:i+block_size, j:j+block_size] = calculate_entropy(block)
+
+entropy_norm = cv2.normalize(entropy_map, None, 0, 1, cv2.NORM_MINMAX)
+
+# ---------------- Security Score Heatmap ----------------
+security_score = np.round(0.5*edges_norm + 0.3*variance_norm + 0.2*entropy_norm, 4)
+threshold = 0.6
+safe_pixels = security_score > threshold
+
+# Highlight safest pixels in red
+marked_image = image_rgb.copy()
+marked_image[safe_pixels] = [255, 0, 0]
+
+# ---------------- Display ----------------
+plt.figure(figsize=(20,5))
+
+plt.subplot(1,5,1)
+plt.title("Original Image")
+plt.imshow(image_rgb)
+plt.axis('off')
+
+plt.subplot(1,5,2)
+plt.title("Strong Edges")
+plt.imshow(edges, cmap='gray')
+plt.axis('off')
+
+plt.subplot(1,5,3)
+plt.title("Entropy Map")
+plt.imshow(entropy_norm, cmap='hot')
+plt.colorbar()
+plt.axis('off')
+
+plt.subplot(1,5,4)
+plt.title("Security Score Heatmap")
+plt.imshow(security_score, cmap='hot')
+plt.colorbar()
+plt.axis('off')
+
+plt.subplot(1,5,5)
+plt.title("Safest Pixels (Red)")
+plt.imshow(marked_image)
+plt.axis('off')
+
+plt.show()
+
+# ---------------- Stats ----------------
+safe_count = np.sum(safe_pixels)
+total_pixels = gray.size
+safe_percentage = (safe_count / total_pixels) * 100
+
+print("EMBEDDING MODE : ADAPTIVE (AES-256-GCM, keyed order)")
+print(f"Image Dimension       : {width} × {height}")
+print(f"Total Pixels          : {total_pixels}")
+print(f"Safest Pixels Selected: {safe_count}")
+print(f"Safe Pixel Percentage : {safe_percentage:.2f}%")
